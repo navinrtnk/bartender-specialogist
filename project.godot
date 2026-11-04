@@ -1,0 +1,37 @@
+; Open with the .NET edition of Godot.
+config_version=5
+
+[application]
+config/name="Bartender Specialogist"
+config/version="1.0"
+run/main_scene="res://Scenes/NeighborhoodBar.tscn"
+config/features=PackedStringArray("4.7", "C#", "Forward Plus")
+config/icon="res://Assets/icon.svg"
+
+[display]
+window/size/viewport_width=1600
+window/size/viewport_height=900
+window/size/window_width_override=1440
+window/size/window_height_override=810
+window/stretch/mode="canvas_items"
+window/handheld/orientation=0
+
+[dotnet]
+project/assembly_name="BartenderSpecialogist"
+
+[editor]
+; Preserve this small scene's text paths when exporting C# script references.
+export/convert_text_resources_to_binary=false
+
+[rendering]
+renderer/rendering_method="forward_plus"
+renderer/rendering_method.mobile="mobile"
+textures/default_filters/use_nearest_mipmap_filter=false
+textures/default_filters/anisotropic_filtering_level=4
+anti_aliasing/quality/msaa_3d=1
+anti_aliasing/quality/msaa_3d.mobile=2
+environment/ssao/quality=3
+environment/ssao/half_size=false
+lights_and_shadows/directional_shadow/size=4096
+lights_and_shadows/positional_shadow/atlas_size=4096
+environment/defaults/default_clear_color=Color(0.85, 0.9, 0.89, 1)
