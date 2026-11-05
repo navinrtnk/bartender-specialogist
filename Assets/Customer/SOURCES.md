@@ -1,18 +1,23 @@
 # Customer asset sources
 
-These graphical assets are **CC0-1.0**, separately from the project's MIT code.
+These graphical assets and rig/pose data are **CC0-1.0**, separately from the project's MIT code.
 
-- `head.obj`, `hands.obj`: exposed head, neck, upper chest, and hands cropped from MakeHuman's `hm08` base mesh. [Original mesh](https://github.com/makehumancommunity/makehuman/blob/master/makehuman/data/3dobjs/base.obj).
-- `skin.png`: `middleage_lightskinned_male_diffuse.png` from the MakeHuman core assets.
-- `hair.obj`, `hair.png`: MakeHuman core `short04` hair mesh and texture.
-- `eyes.obj`, `eyes.png`: MakeHuman core high-poly eyes and brown eye texture. The mesh is aligned to the base mesh eye joints, with the shader-specific blue cornea marker shell removed for standard PBR rendering.
-- `clothing.obj`, `clothing-*.png`: fitted `male_casualsuit01` shirt and jeans, with diffuse, normal, and ambient occlusion maps.
-- `brows.obj`, `brows.png`, `lashes.obj`, `lashes.png`: fitted `eyebrow001` and `eyelashes01` core assets.
+- `Avatars/*.glb`: six seated, skinned patrons generated from MakeHuman's `hm08` base mesh, default skeleton, skin weights, and young adult macrodetail targets. Only exposed skin is exported: head, neck, upper chest, hands, and lower legs where required by skirts.
+- Skin atlases: middle-aged light-skinned male and young adult male/female core textures. The young adult shape targets provide the five background guests' body and facial proportions.
+- Clothing: `male_casualsuit01` button-down shirt and jeans; `female_elegantsuit01` blouse and skirt, with diffuse, normal, and ambient occlusion maps.
+- Hair: `short04`, `short02`, `long01`, `bob01`, and `braid01`; fitted `eyebrow001` and `eyelashes01` meshes and textures.
+- Eyes and teeth: fitted core high-poly eyes, brown eye texture, and `teeth_base`. The eye mesh's shader-specific blue cornea marker shell is omitted for standard PBR rendering.
+- `expression-poses.json`: selected CC0 facial pose units converted from the core `face-poseunits.bvh` and its frame mapping. These drive smiles, eyelids, and speaking motion on actual facial joints.
 
-The skin and hair come from the [MakeHuman system assets CC0 pack](https://files.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip). The eyes mesh is available in the [core repository](https://github.com/makehumancommunity/makehuman/tree/master/makehuman/data/eyes).
+Inputs come from the [MakeHuman core repository](https://github.com/makehumancommunity/makehuman) and [system assets CC0 pack](https://files.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip). Original authors include the MakeHuman Team, Data Collection AB, Joel Palmius, and Jonas Hauquier. The [MakeHuman license](https://github.com/makehumancommunity/makehuman/blob/master/LICENSE.md) explicitly covers graphical data, skeletons, targets, and poses under CC0; see also its [licensing statement](https://www.makehumancommunity.org/about/license.html).
 
-Original asset authors include the MakeHuman Team, Data Collection AB, Joel Palmius, and Jonas Hauquier. See the [core asset license](https://github.com/makehumancommunity/makehuman/blob/master/LICENSE.ASSETS.md) and [MakeHuman licensing statement](https://www.makehumancommunity.org/about/license.html).
+`scripts/fetch_customer.py` downloads and SHA-256 verifies inputs listed in [sources.json](sources.json), into the ignored `.tools/customer-source` directory. To regenerate the current models, install NumPy in a development Python environment, then run:
 
-`scripts/fetch_customer.py` downloads only the required input files and verifies the SHA-256 checksums in [sources.json](sources.json). Inputs remain in the ignored `.tools/customer-source` directory.
+```sh
+python scripts/fetch_customer.py
+python scripts/prepare_avatars.py
+```
 
-`scripts/prepare_customer.py` records the original fitting, seated pose, skinning, coordinate transforms, and subdivision. The garment is fitted to the anatomical base through its CC0 fitting data, then skin and clothing receive the same seated transforms using MakeHuman's CC0 default rig/weight data. The neck extends into the shirt collar. Only exposed skin is exported; no unclothed full body, MakeHuman application code, or runtime rig is included.
+The original project pipeline fits garments, hair, and eyes through barycentric fitting data, poses skin and clothing together, interpolates skin weights during subdivision, and exports glTF 2.0 rigs with eight joint influences per vertex. The game applies original procedural gaze, arm inverse kinematics, gestures, and drink handling; it contains no MakeHuman application code. Python and NumPy are development tools, not game runtime dependencies.
+
+Legacy version 1.0 static `*.obj` meshes and short-named texture aliases are retained as source assets. The current game uses the skinned GLBs; legacy resources are excluded from desktop exports.

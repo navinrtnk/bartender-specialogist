@@ -10,7 +10,7 @@ They are distributed under [Poly Haven's CC0 asset license](https://polyhaven.co
 
 ## MakeHuman graphical assets — CC0-1.0
 
-The customer's exposed anatomical skin, hands, shirt and jeans, hair, brows, lashes, eyes, and development rig data are derived from MakeHuman core graphical assets. Details, SHA-256 checksums, and the project's original fitting/seated-pose processing are recorded in [Assets/Customer/SOURCES.md](Assets/Customer/SOURCES.md). They are covered by the [MakeHuman core asset CC0 license](https://www.makehumancommunity.org/about/license.html); no MakeHuman application source code is included.
+The patrons' exposed anatomical skin, hands, clothing, hair, brows, lashes, eyes, teeth, skeletons, skin weights, shape targets, and facial pose data are derived from MakeHuman core graphical assets. Details, SHA-256 checksums, and the project's original fitting, skinning, and glTF processing are recorded in [Assets/Customer/SOURCES.md](Assets/Customer/SOURCES.md). They are covered by the [MakeHuman core asset CC0 license](https://www.makehumancommunity.org/about/license.html); no MakeHuman application source code is included. The runtime gaze, inverse kinematics, sipping, and gesture sequencing are original project code.
 
 ## Label typography
 

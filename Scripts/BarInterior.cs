@@ -6,6 +6,14 @@ namespace BartenderSpecialogist;
 
 public static class BarInterior
 {
+    public static readonly Vector3[] TablePositions=[new(-3.55f,0,-3.7f),new(-3.55f,0,-6.65f),new(3.55f,0,-3.7f),new(3.55f,0,-6.65f)];
+    public static int ChairCount(int table)=>table==2 ? 3 : 2;
+    public static float ChairAngle(int table,int seat)=>seat*Mathf.Tau/ChairCount(table);
+    public static Vector3 ChairOffset(int table,int seat)
+    {
+        var angle=ChairAngle(table,seat);
+        return new(Mathf.Sin(angle)*.92f,0,Mathf.Cos(angle)*.92f);
+    }
     public static void Build(Node3D root, ScenePalette p)
     {
         var room = Group(root, "Architecture");
@@ -76,9 +84,7 @@ public static class BarInterior
         }
 
         var seating = Group(root, "FourTables");
-        foreach (var x in new[] { -3.55f, 3.55f })
-            foreach (var z in new[] { -3.7f, -6.65f })
-                Table(seating, p, new(x, 0, z));
+        for(var i=0;i<TablePositions.Length;i++)Table(seating,p,TablePositions[i],i);
         Plant(root, p, new(-5.2f, 0, -8.3f));
         Plant(root, p, new(5.15f, 0, 2.9f));
     }
@@ -96,20 +102,21 @@ public static class BarInterior
         RoundedBox(stool, "LowBack", new(.43f, .25f, .055f), new(0, .96f, -.21f), p.Teal, .022f);
     }
 
-    private static void Table(Node root, ScenePalette p, Vector3 position)
+    private static void Table(Node root, ScenePalette p, Vector3 position,int index)
     {
-        var table = Group(root, "NeighborhoodTable", position);
+        var table = Group(root, $"Table{index+1}", position);
         Cylinder(table, "PedestalBase", .31f, .27f, .055f, new(0, .05f, 0), p.Ink);
         Cylinder(table, "Pedestal", .045f, .045f, .69f, new(0, .4f, 0), p.Ink);
         Vessel(table, "RoundOakTop", [new(0, 0), new(.625f, 0), new(.64f, .008f), new(.64f, .043f), new(.63f, .055f), new(0, .055f)], new(0, .7425f, 0), p.Oak);
         Cylinder(table, "BudVase", .048f, .035f, .12f, new(0, .86f, 0), p.Paper);
         Rod(table, "VaseStem", new(0, .89f, 0), new(.02f, 1.09f, .01f), .006f, p.Leaf);
         Sphere(table, "VaseLeaf", new(.11f, .035f, .045f), new(.03f, 1.02f, .01f), p.Leaf);
-        foreach (var side in new[] { -1f, 1f })
+        for(var seat=0;seat<ChairCount(index);seat++)
         {
-            var chair = Group(table, "Chair", new(0, 0, side * .92f));
+            var chair = Group(table, $"Chair{seat+1}", ChairOffset(index,seat));
+            chair.Rotation=new(0,ChairAngle(index,seat)+Mathf.Pi,0);
             RoundedBox(chair, "Seat", new(.48f, .065f, .46f), new(0, .46f, 0), p.Teal, .025f);
-            RoundedBox(chair, "Back", new(.48f, .42f, .065f), new(0, .75f, side * .2f), p.Teal, .025f);
+            RoundedBox(chair, "Back", new(.48f, .42f, .065f), new(0, .75f, -.2f), p.Teal, .025f);
             var seam = new Vector3[65];
             for (var i = 0; i < seam.Length; i++)
             {

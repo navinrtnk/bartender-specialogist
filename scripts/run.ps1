@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Navin Ratnayake (@navinrtnk). SPDX-License-Identifier: MIT
 [CmdletBinding()]
-param([switch]$SmokeTest, [switch]$Export, [switch]$Compatibility)
+param([Alias('Test')][switch]$SmokeTest, [switch]$Export, [switch]$Compatibility)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $toolRoot = Join-Path $env:LOCALAPPDATA 'BartenderSpecialogist\Tools'
@@ -44,13 +44,27 @@ try {
         Invoke-Checked dotnet @('clean', '--nologo')
     }
     Invoke-Checked dotnet @('build', '--no-incremental', '--nologo')
+    if ($SmokeTest -or $Export) {
+        $results = Join-Path $projectRoot '.godot\test-results'
+        Invoke-Checked dotnet @('test', 'Tests/Unit/BartenderSpecialogist.Tests.csproj', '--no-build', '--no-restore', '--nologo',
+            '--logger', 'trx;LogFileName=unit-tests.trx', '--results-directory', $results)
+        [xml]$report = Get-Content -LiteralPath (Join-Path $results 'unit-tests.trx') -Raw
+        $counters = $report.TestRun.ResultSummary.Counters
+        if ([int]$counters.passed -lt 1 -or [int]$counters.failed -gt 0) { throw 'No passing unit tests were recorded.' }
+        Write-Output "UNIT_TESTS passed=$($counters.passed)"
+    }
     Invoke-Checked $godot @('--headless', '--path', $projectRoot, '--editor', '--import', '--quit')
 
     if ($SmokeTest -or $Export) {
         $log = Join-Path ([IO.Path]::GetTempPath()) ("bartender-smoke-$([guid]::NewGuid()).log")
-        Invoke-Checked $godot @('--headless', '--path', $projectRoot, '--log-file', $log, '--', '--smoke-test')
+        Invoke-Checked $godot @('--headless', '--path', $projectRoot, '--log-file', $log, '--quit-after', '1200', '--', '--test')
         if (Select-String -LiteralPath $log -Pattern '^(ERROR:|SHADER ERROR:|SCRIPT ERROR:)' -Quiet) {
             throw "Godot reported a scene or shader error. See $log"
+        }
+        foreach ($marker in @('UI_TESTS passed=', 'SCENE_TESTS passed=')) {
+            if (-not (Select-String -LiteralPath $log -Pattern $marker -SimpleMatch -Quiet)) {
+                throw "The engine tests did not finish. See $log"
+            }
         }
     }
     if ($Export) {

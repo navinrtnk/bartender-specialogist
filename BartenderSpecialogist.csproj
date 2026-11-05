@@ -11,4 +11,7 @@
     <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
     <EnableSourceLink>false</EnableSourceLink>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Tests/Unit/**/*.cs" />
+  </ItemGroup>
 </Project>

@@ -6,6 +6,7 @@ namespace BartenderSpecialogist;
 public partial class SceneHud : CanvasLayer
 {
     public Button TurnButton { get; private set; } = null!;
+    public Button ResetButton { get; private set; } = null!;
 
     public void Build(FirstPersonController player)
     {
@@ -36,7 +37,7 @@ public partial class SceneHud : CanvasLayer
         buttons.AddThemeConstantOverride("separation", 10);
         root.AddChild(buttons);
         TurnButton = AddButton(buttons, "Turn around", player.TurnAround);
-        AddButton(buttons, "Reset view", player.ResetView);
+        ResetButton = AddButton(buttons, "Reset view", player.ResetView);
 
         var panel = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         panel.AnchorLeft = panel.AnchorRight = .5f;

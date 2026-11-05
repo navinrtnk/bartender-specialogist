@@ -22,6 +22,7 @@ public partial class BarScene : Node3D
         var hud = new SceneHud();
         AddChild(hud);
         hud.Build(player);
+        PatronGroups.Build(this,p);
         SceneDiagnostics.Run(this, player, hud);
     }
 
