@@ -19,5 +19,3 @@ python scripts/prepare_avatars.py
 ```
 
 The original project pipeline fits garments, hair, and eyes through barycentric fitting data, poses skin and clothing together, interpolates skin weights during subdivision, and exports glTF 2.0 rigs with eight joint influences per vertex. The game applies original procedural gaze, arm inverse kinematics, gestures, and drink handling; it contains no MakeHuman application code. Python and NumPy are development tools, not game runtime dependencies.
-
-Legacy version 1.0 static `*.obj` meshes and short-named texture aliases are retained as source assets. The current game uses the skinned GLBs; legacy resources are excluded from desktop exports.
