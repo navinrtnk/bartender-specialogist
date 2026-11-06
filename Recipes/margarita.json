@@ -1,0 +1,17 @@
+{
+  "id": "margarita",
+  "name": "Margarita",
+  "steps": [
+    { "id": "shaker", "action": "TakeShaker", "hint": "Pick up the shaker" },
+    { "id": "ice", "action": "Ice", "hint": "Scoop ice into the shaker" },
+    { "id": "tequila", "action": "Ingredient", "ingredient": "Tequila", "hint": "Add tequila" },
+    { "id": "lime", "action": "Ingredient", "ingredient": "LimeJuice", "hint": "Add prepared lime juice" },
+    { "id": "syrup", "action": "Ingredient", "ingredient": "SimpleSyrup", "hint": "Add prepared simple syrup" },
+    { "id": "triple-sec", "action": "Ingredient", "ingredient": "TripleSec", "hint": "Add triple sec" },
+    { "id": "shake", "action": "Shake", "hint": "Step away from the well and shake" },
+    { "id": "strain", "action": "Strain", "hint": "Strain into a glass at the glass station" },
+    { "id": "serve", "action": "Serve", "hint": "Serve the customer" },
+    { "id": "collect", "action": "CollectGlass", "hint": "Collect the empty glass" },
+    { "id": "wash", "action": "WashGlass", "hint": "Load the glass into the dishwasher" }
+  ]
+}

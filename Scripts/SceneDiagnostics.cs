@@ -9,11 +9,12 @@ public static class SceneDiagnostics
     public static async void Run(Node3D scene, FirstPersonController player, SceneHud hud)
     {
         var args = OS.GetCmdlineUserArgs();
-        if (args.Contains("--smoke-test") || args.Contains("--test"))
+        if (args.Contains("--smoke-test") || args.Contains("--test") || args.Contains("--gameplay-test"))
         {
             try
             {
                 await Tests.SceneTests.Run(scene, player, hud);
+                if (args.Contains("--gameplay-test") || args.Contains("--test")) await Tests.GameplayTests.Run(scene, player);
                 scene.GetTree().Quit();
             }
             catch (Exception error)
@@ -23,7 +24,11 @@ public static class SceneDiagnostics
             }
             return;
         }
-        if (args.Contains("--no-hud")) hud.Visible = false;
+        if (args.Contains("--no-hud"))
+        {
+            hud.Visible = false;
+            scene.GetNode<DrinkGameplay>("DrinkGameplay").Hud.Visible = false;
+        }
         var capture = args.FirstOrDefault(a => a.StartsWith("--capture="));
         if (capture == null && !args.Contains("--movie-view")) return;
         if (args.Contains("--back")) player.TurnAround();
@@ -40,9 +45,10 @@ public static class SceneDiagnostics
         }
         if (args.Contains("--customer-detail"))
         {
-            player.Position = new(.55f, FirstPersonController.StartPosition.Y, 1.67f);
+            var customer = scene.GetNode<SeatedCustomer>("SeatedCustomer");
+            player.Position = new(customer.Position.X - .4f, FirstPersonController.StartPosition.Y, 1.67f);
             player.Camera.Fov = 38;
-            player.Camera.LookAt(new(.95f, 1.43f, -.88f), Vector3.Up);
+            player.Camera.LookAt(customer.HeadPosition - Vector3.Up * .12f, Vector3.Up);
         }
         if (args.Contains("--women-detail"))
         {

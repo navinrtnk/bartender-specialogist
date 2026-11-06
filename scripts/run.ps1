@@ -61,7 +61,7 @@ try {
         if (Select-String -LiteralPath $log -Pattern '^(ERROR:|SHADER ERROR:|SCRIPT ERROR:)' -Quiet) {
             throw "Godot reported a scene or shader error. See $log"
         }
-        foreach ($marker in @('UI_TESTS passed=', 'SCENE_TESTS passed=')) {
+        foreach ($marker in @('UI_TESTS passed=', 'SCENE_TESTS passed=', 'GAMEPLAY_TESTS complete')) {
             if (-not (Select-String -LiteralPath $log -Pattern $marker -SimpleMatch -Quiet)) {
                 throw "The engine tests did not finish. See $log"
             }
@@ -74,7 +74,7 @@ try {
             throw 'The export is missing its C# assembly.'
         }
         $notices = @('LICENSE', 'THIRD_PARTY_NOTICES.md', 'Assets\Customer\SOURCES.md', 'Assets\Customer\sources.json',
-            'Assets\Materials\sources.json', 'Assets\Labels\FONT-LICENSE.txt', 'Assets\Labels\SOURCES.md')
+            'Assets\Materials\sources.json', 'Assets\Labels\FONT-LICENSE.txt', 'Assets\Labels\SOURCES.md', 'Assets\Audio\SOURCES.md')
         foreach ($file in $notices) {
             $destination = Join-Path $buildRoot $file
             New-Item -ItemType Directory -Force -Path (Split-Path -Parent $destination) | Out-Null

@@ -8,7 +8,7 @@ public partial class SeatedCustomer : PatronActor
     public void Build(ScenePalette palette)
     {
         Name = "SeatedCustomer";
-        Position = new(.95f, 0, -1.02f);
+        Position = new(2.85f, 0, -1.02f);
         Build(palette, "bar_man", true);
     }
 }

@@ -38,14 +38,16 @@ public static class HeroProps
         Glass(station, p, new(.66f, .025f, -.035f));
     }
 
-    private static void Tin(Node root, ScenePalette p, string name, Vector3 position, float height, float rim)
+    public static Node3D Tin(Node root, ScenePalette p, string name, Vector3 position, float height, float rim)
     {
+        var tin = Group(root, name, position);
         var bottom = rim * .72f;
-        Vessel(root, name, [new(0,0),new(bottom*.86f,0),new(bottom,.003f),new(bottom*1.025f,.008f),
+        Vessel(tin, "TinBody", [new(0,0),new(bottom*.86f,0),new(bottom,.003f),new(bottom*1.025f,.008f),
             new(rim*.975f,height-.014f),new(rim,height-.005f),new(rim,height-.001f),new(rim*.98f,height+.001f),
-            new(rim*.955f,height-.001f),new(rim*.955f,height-.007f),new(bottom*.96f,.011f),new(0,.009f)], position, p.ToolSteel);
-        Ring(root, "RolledShakerLip", rim * .98f, .0015f, position + new Vector3(0, height, 0), p.ToolSteel);
-        Ring(root, "WeightedShakerHeel", bottom * .97f, .0017f, position + new Vector3(0, .003f, 0), p.ToolSteel);
+            new(rim*.955f,height-.001f),new(rim*.955f,height-.007f),new(bottom*.96f,.011f),new(0,.009f)], Vector3.Zero, p.ToolSteel);
+        Ring(tin, "RolledShakerLip", rim * .98f, .0015f, new Vector3(0, height, 0), p.ToolSteel);
+        Ring(tin, "WeightedShakerHeel", bottom * .97f, .0017f, new Vector3(0, .003f, 0), p.ToolSteel);
+        return tin;
     }
 
     private static void Strainer(Node root, ScenePalette p, Vector3 position)

@@ -14,7 +14,7 @@ public static class SceneTests
         var recessedIce = scene.GetNode<Node3D>("IceWell/BasinFloor").GlobalPosition.Y < MargaritaStation.WorktopHeight - .25f;
         var clearCounter = new[] { "MargaritaStation", "FreshPrep", "MargaritaIngredients", "IceWell", "IceScoop" }
             .All(path => scene.GetNode<Node3D>(path).GlobalPosition.Z > MargaritaStation.CustomerEdgeZ + .3f);
-        var mesh = scene.GetNode<MeshInstance3D>("MargaritaStation/LargeShakerTin").Mesh;
+        var mesh = scene.GetNode<MeshInstance3D>("MargaritaStation/LargeShakerTin/TinBody").Mesh;
         var arrays = mesh.SurfaceGetArrays(0);
         var vertices = arrays[(int)Godot.Mesh.ArrayType.Vertex].AsVector3Array();
         var normals = arrays[(int)Godot.Mesh.ArrayType.Normal].AsVector3Array();
@@ -55,7 +55,7 @@ public static class SceneTests
         Check("detailed labels and tools", labelsLoaded && detailedTools);
         Check("six skinned customers", fittedCustomers);
         Check("ice shells, cores and bubbles", detailedIce);
-        Check("five well liquors below the ice", wellBottles == 5 && railBelowIce);
+        Check("six well bottles below the ice", wellBottles == 6 && railBelowIce);
         Check("eight clean glasses", glassStacks);
         Check("left-side wash area", washArea);
         Check("three cosmopolitans and two old fashioneds", groupDrinks);

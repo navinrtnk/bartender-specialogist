@@ -312,6 +312,27 @@ def prepare():
         glb.save(OUTPUT/(name+".glb"))
 
 
+
+def prepare_arms():
+    """First-person sleeves and anatomical arms, using the same CC0 skinning rig."""
+    OUTPUT.mkdir(parents=True,exist_ok=True)
+    avatar=Avatar();glb=GLB(avatar)
+    ids=[i for name,i in avatar.ids.items() if name.startswith(("upperarm","lowerarm","wrist","metacarpal","finger"))]
+    # Forearms are covered by the fitted sleeves; omit hidden skin to prevent
+    # skin poking through the cloth when the elbow and wrist flex.
+    faces=[(f,g) for f,g in avatar.faces if g=="body" and all(abs(avatar.base[v,0])>.391 and avatar.base[v,1]>.05 for v,_ in f)]
+    skin="middleage_lightskinned_male_diffuse.png";clothes="male_casualsuit01"
+    for texture in [skin]+[clothes+x for x in ["_diffuse.png","_normal.png","_ao.png"]]:
+        target=OUTPUT.parent/texture
+        if not target.exists():shutil.copyfile(SOURCE/texture,target)
+    glb.mesh("Skin",avatar.base,avatar.weights,np.array(avatar.uvs),faces,glb.material("Skin",skin),True)
+    vertices,weights,uvs,faces=avatar.fitted(clothes)
+    influence=weights[:,ids].sum(1)
+    faces=[(f,g) for f,g in faces if all(influence[v]>.45 for v,_ in f)]
+    glb.mesh("Clothing",vertices,weights,uvs,faces,glb.material("Clothing",clothes+"_diffuse.png",clothes+"_normal.png",clothes+"_ao.png"),True)
+    glb.save(OUTPUT/"bartender_arms.glb")
+
+
 def expressions():
     lines=(SOURCE/"face-poseunits.bvh").read_text().splitlines()
     channels=[];offset=0;name=""
@@ -348,5 +369,10 @@ def expressions():
 
 
 if __name__=="__main__":
-    expressions()
-    if "--expressions-only" not in sys.argv:prepare()
+    if "--arms-only" in sys.argv:
+        prepare_arms()
+    else:
+        expressions()
+        if "--expressions-only" not in sys.argv:
+            prepare()
+            prepare_arms()

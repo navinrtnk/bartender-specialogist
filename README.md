@@ -1,21 +1,19 @@
 # Bartender Specialogist
 
-Step behind the counter of a small neighborhood bar, built with C# and Godot 4.7.2 .NET.
+A first-person neighborhood bar built with C# and Godot 4.7.2 .NET.
 
 **Original work by [Navin Ratnayake (@navinrtnk)](https://github.com/navinrtnk).** Copyright © 2026 Navin Ratnayake.
 
-![The current bar and customer animations, captured offline](docs/bar-overview.gif)
+![Making a margarita in the current game](docs/bar-overview.gif)
 
-Explore four tables and a detailed bartender station with liquor shelves, an ice well, glasses, margarita supplies, a sink, and a dishwasher. The customer at the counter follows your gaze, smiles, and waves. Five background guests sip cosmopolitans and old fashioneds while chatting.
+Take a customer's order, collect your shaker, scoop ice, and add tequila, prepared lime juice, simple syrup, and triple sec. Seal and shake, strain into a glass, and serve. Jointed first-person hands handle the tools throughout.
 
-Equipment and drinks are scenery; this is an explorable environment, with no drink-making or dialogue yet. The GIF is an offline capture, so it doesn't represent real-time frame rate.
+The customer tastes the drink, says “Great drink!”, and takes casual sips over a minute as the glass empties. Collect the glass and load the dishwasher to repeat. Each drink makes him tipsier; after five he falls asleep on the bar. Clear up and start a new shift to continue.
+
+Use **WASD** and mouse/arrows to move/look. Aim at highlighted objects and press **Space**. Take orders from the workstation; use the right-hand service gap to serve and collect glasses. Menus use **arrows + Space**; **Esc** closes them. **H** toggles hints. Touch devices have an Interact button.
 
 ## Run and test
 
-Install **Godot 4.7.2 .NET** and the **.NET 8 SDK**, open `project.godot`, build, and press **F5**.
+Install **Godot 4.7.2 .NET** and **.NET 8**, open `project.godot`, build, and press **F5**. On Windows, `./scripts/run.ps1` launches the game; use `-Test`, `-Export`, or `-Compatibility` as needed. Extract the full Windows ZIP before running it.
 
-On Windows, `./scripts/run.ps1` launches the game. Add `-Compatibility` for simpler lighting, `-Test` for unit/UI/scene checks, or `-Export` for a fresh versioned Windows ZIP. See [test details](Tests/README.md).
-
-Use WASD and mouse/arrows to explore, B to turn, R to reset, H to hide the HUD, and Esc to release the mouse. Touch controls are also supported.
-
-Original code and procedural assets use the [MIT License](LICENSE); CC0 assets and spirit trademarks are covered in [third-party notices](THIRD_PARTY_NOTICES.md). Please credit and link to this original project when sharing a derivative.
+Measurements are not simulated. Animation and speech are procedural/synthesized; this remains a visual prototype. See [test coverage](Tests/README.md) and [MIT license](LICENSE). External assets are credited in [third-party notices](THIRD_PARTY_NOTICES.md). Please link to this original project when sharing derivatives.

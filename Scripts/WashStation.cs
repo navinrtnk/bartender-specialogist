@@ -41,16 +41,22 @@ public static class WashStation
         }
 
         var washer = Group(root, "Dishwasher", new(-3.55f, 0, 1.005f));
-        RoundedBox(washer, "InsulatedCabinet", new(.62f, .79f, .68f), new(0, .46f, 0), p.BasinSteel, .018f);
-        RoundedBox(washer, "BrushedDoor", new(.585f, .60f, .032f), new(0, .43f, .355f), p.Steel, .010f);
-        RoundedBox(washer, "Gasket", new(.598f, .625f, .012f), new(0, .43f, .340f), p.Rubber, .008f);
-        RoundedBox(washer, "ControlPanel", new(.585f, .10f, .025f), new(0, .79f, .354f), p.Ink, .006f);
-        RoundedBox(washer, "RecessedHandle", new(.36f, .041f, .025f), new(0, .708f, .384f), p.Ink, .009f);
-        Rod(washer, "DoorPull", new(-.17f, .708f, .413f), new(.17f, .708f, .413f), .009f, p.ToolSteel);
-        Text(washer, "Status", "READY", new(-.13f, .79f, .370f), .00028f, new("a6c4a1"), 28);
+        foreach (var x in new[] { -.30f, .30f })
+            RoundedBox(washer, "CabinetSide", new(.025f, .79f, .68f), new(x, .46f, 0), p.BasinSteel, .008f);
+        RoundedBox(washer, "CabinetBack", new(.59f, .79f, .025f), new(0, .46f, -.33f), p.BasinSteel, .008f);
+        foreach (var y in new[] { .08f, .845f }) RoundedBox(washer, "CabinetPanel", new(.59f, .025f, .68f), new(0, y, 0), p.BasinSteel, .008f);
+        for (var i = 0; i < 10; i++)
+            Rod(washer, "GlassRack", new(-.25f + i * .055f, .42f, -.25f), new(-.25f + i * .055f, .42f, .25f), .002f, p.ToolSteel);
+        var door = Group(washer, "Door", new(0, .13f, .355f));
+        RoundedBox(door, "BrushedDoor", new(.585f, .60f, .032f), new(0, .30f, 0), p.Steel, .010f);
+        RoundedBox(door, "Gasket", new(.598f, .625f, .012f), new(0, .30f, -.015f), p.Rubber, .008f);
+        RoundedBox(door, "ControlPanel", new(.585f, .10f, .025f), new(0, .66f, -.001f), p.Ink, .006f);
+        RoundedBox(door, "RecessedHandle", new(.36f, .041f, .025f), new(0, .578f, .029f), p.Ink, .009f);
+        Rod(door, "DoorPull", new(-.17f, .578f, .058f), new(.17f, .578f, .058f), .009f, p.ToolSteel);
+        Text(door, "Status", "READY", new(-.13f, .66f, .015f), .00028f, new("a6c4a1"), 28);
         foreach (var x in new[] { .12f, .20f })
         {
-            var button = Cylinder(washer, "ControlButton", .013f, .013f, .004f, new(x, .79f, .371f), p.ToolSteel, 32);
+            var button = Cylinder(door, "ControlButton", .013f, .013f, .004f, new(x, .66f, .016f), p.ToolSteel, 32);
             button.RotationDegrees = new(90, 0, 0);
         }
         for (var i = 0; i < 9; i++)

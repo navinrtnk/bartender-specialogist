@@ -24,10 +24,20 @@ public partial class PatronActor : Node3D
     private bool _cosmo;
     private float _phase;
     private double _clock;
-    private int _neck, _head, _eyeL, _eyeR;
+    private int _neck, _head, _eyeL, _eyeR, _spineUpper, _spineLower;
     private Arm _left = null!, _right = null!;
     private readonly Dictionary<int, Dictionary<string, Quaternion>> _expressions = new();
     private readonly List<(int Bone, Vector3 Axis, float Bend)> _rightFingers = new();
+    private readonly List<(int Bone, Vector3 Axis, float Bend)> _leftFingers = new();
+    private DrinkSession? _order;
+    private MargaritaGlass? _servedGlass;
+    private float _fall, _speechRemaining;
+    public Vector3 HeadPosition => Rig.GlobalTransform * Rig.GetBoneGlobalPose(_head).Origin;
+    public Vector3 GlassRestPosition => GlobalTransform * new Vector3(.235f, 1.138f, .49f);
+    public void BindOrder(DrinkSession order) => _order = order;
+    public void ReceiveGlass(MargaritaGlass glass) => _servedGlass = glass;
+    public void ReleaseGlass() => _servedGlass = null;
+    public void Speak(float seconds) => _speechRemaining = seconds;
     private Quaternion _neckLook = Quaternion.Identity, _headLook = Quaternion.Identity, _lookL = Quaternion.Identity, _lookR = Quaternion.Identity;
     private readonly Vector3 _cupRest = new(-.235f, 1.1475f, .49f);
 
@@ -35,12 +45,21 @@ public partial class PatronActor : Node3D
 
     public void Build(ScenePalette p, string model, bool barPatron, bool cosmo = false, float phase = 0, string tint = "ffffff")
     {
-        IsBarPatron = barPatron; _cosmo = cosmo; _phase = phase;
+        IsBarPatron = barPatron;
+        _cosmo = cosmo;
+        _phase = phase;
         _visual = GD.Load<PackedScene>($"res://Assets/Customer/Avatars/{model}.glb").Instantiate<Node3D>();
-        _visual.Name = "Visual"; AddChild(_visual);
+        _visual.Name = "Visual";
+        AddChild(_visual);
         Rig = _visual.FindChildren("*", "Skeleton3D", true, false).OfType<Skeleton3D>().Single();
-        _neck = Bone("neck01"); _head = Bone("head"); _eyeL = Bone("eye.L"); _eyeR = Bone("eye.R");
-        _left = MakeArm("L"); _right = MakeArm("R");
+        _neck = Bone("neck01");
+        _head = Bone("head");
+        _eyeL = Bone("eye.L");
+        _eyeR = Bone("eye.R");
+        _spineUpper = Bone("spine05");
+        _spineLower = Bone("spine04");
+        _left = MakeArm("L");
+        _right = MakeArm("R");
         _pores ??= new NoiseTexture2D
         {
             Width = 512,
@@ -53,19 +72,27 @@ public partial class PatronActor : Node3D
         {
             for (var i = 0; i < mesh.Mesh.GetSurfaceCount(); i++)
             {
-                if (mesh.Mesh.SurfaceGetMaterial(i) is not StandardMaterial3D original) continue;
+                if (mesh.Mesh.SurfaceGetMaterial(i) is not StandardMaterial3D original)
+                    continue;
                 var material = (StandardMaterial3D)original.Duplicate();
                 material.TextureFilter = BaseMaterial3D.TextureFilterEnum.LinearWithMipmapsAnisotropic;
                 if (mesh.Name == "Skin")
                 {
-                    SkinMesh = mesh; material.Roughness = .58f;
+                    SkinMesh = mesh;
+                    material.Roughness = .58f;
                     material.SubsurfScatterEnabled = RenderingServer.GetCurrentRenderingMethod() == "forward_plus";
-                    material.SubsurfScatterStrength = .07f; material.SubsurfScatterSkinMode = true;
-                    material.NormalEnabled = true; material.NormalTexture = _pores; material.NormalScale = .12f;
+                    material.SubsurfScatterStrength = .07f;
+                    material.SubsurfScatterSkinMode = true;
+                    material.NormalEnabled = true;
+                    material.NormalTexture = _pores;
+                    material.NormalScale = .12f;
                 }
-                if (mesh.Name == "Clothing") { ClothingMesh = mesh; material.AlbedoColor = new(tint); material.Roughness = .88f; }
-                if (mesh.Name == "Eyes") { material.Roughness = .17f; material.MetallicSpecular = .7f; }
-                if (mesh.Name == "Teeth") material.Roughness = .4f;
+                if (mesh.Name == "Clothing")
+                { ClothingMesh = mesh; material.AlbedoColor = new(tint); material.Roughness = .88f; }
+                if (mesh.Name == "Eyes")
+                { material.Roughness = .17f; material.MetallicSpecular = .7f; }
+                if (mesh.Name == "Teeth")
+                    material.Roughness = .4f;
                 mesh.SetSurfaceOverrideMaterial(i, material);
             }
         }
@@ -73,11 +100,12 @@ public partial class PatronActor : Node3D
         for (var i = 0; i < Rig.GetBoneCount(); i++)
         {
             var name = Rig.GetBoneName(i).ToString();
-            if (!name.StartsWith("finger") || !name.EndsWith("_R")) continue;
+            if (!name.StartsWith("finger"))
+                continue;
             var children = Rig.GetBoneChildren(i);
             var forward = children.Length > 0 ? Rest(children[0]) - Rest(i) : Rest(i) - Rest(Rig.GetBoneParent(i));
             var bend = name.StartsWith("finger1") ? .38f : cosmo && name.StartsWith("finger2") ? .48f : .75f;
-            _rightFingers.Add((i, forward.Normalized().Cross(Vector3.Down).Normalized(), bend));
+            (name.EndsWith("_L") ? _leftFingers : _rightFingers).Add((i, forward.Normalized().Cross(Vector3.Down).Normalized(), bend));
         }
         if (!barPatron)
         {
@@ -91,13 +119,16 @@ public partial class PatronActor : Node3D
     private int Bone(string name)
     {
         var id = Rig.FindBone(name.Replace('.', '_'));
-        if (id < 0) throw new InvalidOperationException($"Patron rig is missing {name}.");
+        if (id < 0)
+            throw new InvalidOperationException($"Patron rig is missing {name}.");
         return id;
     }
     private Vector3 Rest(int bone) => Rig.GetBoneGlobalRest(bone).Origin;
     private Arm MakeArm(string side)
     {
-        var a = Bone("upperarm01." + side); var b = Bone("lowerarm01." + side); var c = Bone("wrist." + side);
+        var a = Bone("upperarm01." + side);
+        var b = Bone("lowerarm01." + side);
+        var c = Bone("wrist." + side);
         return new(a, b, c, Rest(a), Rest(b), Rest(c));
     }
 
@@ -108,8 +139,10 @@ public partial class PatronActor : Node3D
             foreach (var entry in group.Value.AsGodotDictionary())
             {
                 var id = Rig.FindBone(entry.Key.AsString());
-                if (id < 0) continue;
-                if (!_expressions.TryGetValue(id, out var poses)) _expressions[id] = poses = new();
+                if (id < 0)
+                    continue;
+                if (!_expressions.TryGetValue(id, out var poses))
+                    _expressions[id] = poses = new();
                 var q = entry.Value.AsGodotArray();
                 poses[group.Key.AsString()] = new Quaternion((float)q[0], (float)q[1], (float)q[2], (float)q[3]).Normalized();
             }
@@ -117,13 +150,16 @@ public partial class PatronActor : Node3D
 
     public override void _Process(double delta)
     {
-        var step = Mathf.Min((float)delta, .1f); _clock += step;
+        var step = Mathf.Min((float)delta, .1f);
+        _clock += step;
         Evaluate((float)_clock, step);
     }
 
     /// <summary>Also used by deterministic animation checks; no alternate staged animation.</summary>
     public void Evaluate(float time, float delta)
     {
+        if (IsBarPatron && _order != null && (_servedGlass != null || _order.DrinksFinished > 0 || _fall > 0))
+        { EvaluateService(time, delta); return; }
         var t = time + _phase;
         _visual.Position = new(0, Mathf.Sin(t * 1.4f) * .0012f, 0);
         var sip = IsBarPatron ? default : Sip(t);
@@ -167,8 +203,10 @@ public partial class PatronActor : Node3D
         var head = Basis.FromEuler(new Vector3(Mathf.Clamp(pitch * .55f + nod, -.28f, .28f), Mathf.Clamp(yaw * .55f, -.68f, .68f), 0)).GetRotationQuaternion();
         _neckLook = _neckLook.Slerp(neck.Normalized(), 1 - Mathf.Exp(-5 * delta)).Normalized();
         _headLook = _headLook.Slerp(head.Normalized(), 1 - Mathf.Exp(-6 * delta)).Normalized();
-        Rig.SetBonePoseRotation(_neck, _neckLook); Rig.SetBonePoseRotation(_head, _headLook);
-        AimEye(_eyeL, target, delta, ref _lookL); AimEye(_eyeR, target, delta, ref _lookR);
+        Rig.SetBonePoseRotation(_neck, _neckLook);
+        Rig.SetBonePoseRotation(_head, _headLook);
+        AimEye(_eyeL, target, delta, ref _lookL);
+        AimEye(_eyeR, target, delta, ref _lookR);
     }
 
     private void AimEye(int eye, Vector3 target, float delta, ref Quaternion rotation)
@@ -177,7 +215,8 @@ public partial class PatronActor : Node3D
         var local = parent.Basis.Inverse() * ((Rig.GlobalTransform.AffineInverse() * target) - Rig.GetBoneGlobalPose(eye).Origin);
         var desired = Basis.FromEuler(new Vector3(Mathf.Clamp(-Mathf.Atan2(local.Y, new Vector2(local.X, local.Z).Length()), -.40f, .40f),
             Mathf.Clamp(Mathf.Atan2(local.X, local.Z), -.48f, .48f), 0)).GetRotationQuaternion();
-        rotation = rotation.Slerp(desired.Normalized(), 1 - Mathf.Exp(-16 * delta)).Normalized(); Rig.SetBonePoseRotation(eye, rotation);
+        rotation = rotation.Slerp(desired.Normalized(), 1 - Mathf.Exp(-16 * delta)).Normalized();
+        Rig.SetBonePoseRotation(eye, rotation);
     }
 
     private void AnimateFace(float smile, float blink, float talk, float pucker)
@@ -214,10 +253,57 @@ public partial class PatronActor : Node3D
 
     private void PoseArm(Arm arm, Vector3 hand, Quaternion handRotation)
     {
-        var pose = SolveArm(arm.Shoulder, arm.Elbow, arm.Hand, hand, handRotation);
+        var parent = Rig.GetBoneParent(arm.Upper);
+        var rest = Rig.GetBoneGlobalRest(parent).AffineInverse();
+        var current = Rig.GetBoneGlobalPose(parent);
+        var pose = SolveArm(rest * arm.Shoulder, rest * arm.Elbow, rest * arm.Hand, current.AffineInverse() * hand,
+            (current.Basis.GetRotationQuaternion().Inverse() * handRotation).Normalized());
         Rig.SetBonePoseRotation(arm.Upper, pose.Upper);
         Rig.SetBonePoseRotation(arm.Lower, pose.Lower);
         Rig.SetBonePoseRotation(arm.Wrist, pose.Wrist);
+    }
+
+    private void EvaluateService(float time, float delta)
+    {
+        var order = _order!;
+        _speechRemaining = Mathf.Max(0, _speechRemaining - delta);
+        _fall = order.Asleep ? Mathf.Min(2.2f, _fall + delta) : Mathf.Max(0, _fall - delta * 2);
+        var lean = BarActions.Ease(_fall / 2.2f) * 1.08f;
+        var sway = order.Asleep ? 0 : Mathf.Sin(time * .85f) * order.DrinksFinished * .020f;
+        Rig.SetBonePoseRotation(_spineUpper, Quaternion.FromEuler(new(lean * .7f, 0, sway)));
+        Rig.SetBonePoseRotation(_spineLower, new Quaternion(Vector3.Right, lean * .3f));
+        GazeTarget = GetViewport().GetCamera3D()?.GlobalPosition ?? GlobalPosition + Vector3.Back * 3;
+        if (order.Asleep)
+        {
+            Rig.SetBonePoseRotation(_neck, new Quaternion(Vector3.Right, .13f));
+            Rig.SetBonePoseRotation(_head, new Quaternion(Vector3.Right, -.2f));
+        }
+        else
+            TrackGaze(GazeTarget, delta, Mathf.Sin(time * 1.1f) * order.DrinksFinished * .025f);
+        WaveAmount = 0;
+        var pose = _servedGlass != null && order.Drinking ? CustomerDrinkCycle.Pose(order.DrinkingSeconds) : default;
+        SipAmount = pose.Lift;
+        SmileAmount = order.Asleep ? 0 : order.DrinkingSeconds >= 7 && order.DrinkingSeconds < 11 ? .65f : .2f;
+        var blink = order.Asleep ? 1 : Mathf.Max(order.DrinksFinished * .06f, Window(time % 4.7f, 0, .055f, .1f, .22f));
+        AnimateFace(SmileAmount * (1 - pose.Lift * .7f), blink, _speechRemaining > 0 ? .15f * Mathf.Abs(Mathf.Sin(time * 9)) : 0, pose.Lift * .15f);
+        PoseArm(_right, _right.Hand + new Vector3(0, -.018f, .095f), Quaternion.Identity);
+        if (_servedGlass == null)
+        {
+            PoseArm(_left, _left.Hand + new Vector3(0, -.018f, .095f), Quaternion.Identity);
+            return;
+        }
+        var mouth = Rig.GetBoneGlobalPose(_head) * new Vector3(0, -.045f, .134f);
+        var rotation = new Quaternion(Vector3.Right, -.30f * pose.Lift);
+        var atMouth = mouth + new Basis(rotation) * new Vector3(0, -.106f, .035f);
+        var cup = new Vector3(.235f, 1.138f, .49f).Lerp(atMouth, pose.Lift);
+        cup.Y += Mathf.Sin(pose.Lift * Mathf.Pi) * .035f;
+        _servedGlass.GlobalTransform = Rig.GlobalTransform * new Transform3D(new Basis(rotation), cup);
+        _servedGlass.SetFill(CustomerDrinkCycle.Fill(order.DrinkingSeconds));
+        var wrist = cup + new Basis(rotation) * new Vector3(.055f, .05f, -.075f);
+        var orientation = rotation * new Quaternion(Vector3.Back, -Mathf.Pi / 2);
+        PoseArm(_left, _left.Hand.Lerp(wrist, pose.Reach), Quaternion.Identity.Slerp(orientation, pose.Reach));
+        foreach (var (bone, axis, bend) in _leftFingers)
+            Rig.SetBonePoseRotation(bone, new Quaternion(axis, bend * pose.Grip));
     }
 
     private void CurlFingers(float amount)
@@ -235,8 +321,11 @@ public partial class PatronActor : Node3D
             RoundedBox(shoe, "Outsole", new(.115f, .023f, .255f), new(0, .012f, 0), p.Ink, .011f);
             Sphere(shoe, "LeatherUpper", new(.112f, .092f, .25f), new(0, .048f, 0), leather);
             RoundedBox(shoe, "Heel", new(.10f, .034f, .073f), new(0, .017f, -.074f), p.Ink, .008f);
-            if (female) Rod(shoe, "Strap", new(-.043f, .084f, -.015f), new(.043f, .084f, -.015f), .003f, leather);
-            else for (var i = 0; i < 4; i++) Rod(shoe, "Lace", new(-.027f, .088f - i * .004f, -.046f + i * .015f), new(.027f, .088f - i * .004f, -.046f + i * .015f), .0014f, p.Ink);
+            if (female)
+                Rod(shoe, "Strap", new(-.043f, .084f, -.015f), new(.043f, .084f, -.015f), .003f, leather);
+            else
+                for (var i = 0; i < 4; i++)
+                    Rod(shoe, "Lace", new(-.027f, .088f - i * .004f, -.046f + i * .015f), new(.027f, .088f - i * .004f, -.046f + i * .015f), .0014f, p.Ink);
         }
     }
 

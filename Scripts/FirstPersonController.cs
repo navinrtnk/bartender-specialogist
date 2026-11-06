@@ -8,6 +8,7 @@ public partial class FirstPersonController : Node3D
 {
     public static readonly Vector3 StartPosition = new(-.1f, 1.72f, 2.55f);
     public Camera3D Camera { get; private set; } = null!;
+    public bool ControlsLocked { get; set; }
     public event Action? ToggleHud;
     private float _yaw;
     private float _pitch = -.24f;
@@ -27,6 +28,7 @@ public partial class FirstPersonController : Node3D
 
     public override void _UnhandledInput(InputEvent input)
     {
+        if (ControlsLocked) return;
         switch (input)
         {
             case InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } when _moveTouch < 0 && _lookTouch < 0:
@@ -73,7 +75,7 @@ public partial class FirstPersonController : Node3D
 
     public override void _Process(double delta)
     {
-        if (!GetWindow().HasFocus()) return;
+        if (ControlsLocked || !GetWindow().HasFocus()) return;
         var movement = _touchMove;
         if (Input.IsPhysicalKeyPressed(Key.W)) movement.Y -= 1;
         if (Input.IsPhysicalKeyPressed(Key.S)) movement.Y += 1;
@@ -82,7 +84,8 @@ public partial class FirstPersonController : Node3D
         movement = movement.LimitLength();
         var direction = new Vector3(movement.X, 0, movement.Y).Rotated(Vector3.Up, _yaw);
         var next = Position + direction * (float)delta * 1.45f;
-        Position = new(Mathf.Clamp(next.X, -3.6f, 3.6f), StartPosition.Y, Mathf.Clamp(next.Z, 1.63f, 3.22f));
+        if (Position.Z < 1.63f && next.X < 3.35f) next.X = 3.35f;
+        Position = new(Mathf.Clamp(next.X, -3.6f, 3.6f), StartPosition.Y, Mathf.Clamp(next.Z, next.X >= 3.35f ? .77f : 1.63f, 3.22f));
 
         var look = Vector2.Zero;
         if (Input.IsPhysicalKeyPressed(Key.Left)) look.X -= 1;

@@ -13,6 +13,10 @@ public static class DetailedBottle
     public static Node3D Build(Node root, ScenePalette p, Spec spec, Vector3 position, bool faceBack = false, bool pourSpout = false)
     {
         var bottle = Group(root, spec.Name.Replace("\n", " "), position);
+        bottle.SetMeta("height", spec.Height);
+        bottle.SetMeta("ingredient", spec.Label == "triple-sec" ? "TripleSec" : spec.Spirit);
+        bottle.SetMeta("grip_radius", spec.Width > .13f ? spec.Width * .145f : spec.Width * .5f);
+        bottle.SetMeta("grip_height", spec.Height * (spec.Width > .13f ? .84f : .45f));
         if (faceBack) bottle.RotationDegrees = new(0, 180, 0);
         var radius = spec.Width / 2;
         var h = spec.Height;

@@ -22,7 +22,10 @@ public partial class BarScene : Node3D
         var hud = new SceneHud();
         AddChild(hud);
         hud.Build(player);
-        PatronGroups.Build(this,p);
+        PatronGroups.Build(this, p);
+        var gameplay = new DrinkGameplay();
+        AddChild(gameplay);
+        gameplay.Build(this, player, customer, p);
         SceneDiagnostics.Run(this, player, hud);
     }
 
