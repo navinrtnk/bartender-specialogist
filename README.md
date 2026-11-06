@@ -4,7 +4,7 @@ A first-person neighborhood bar built with C# and Godot 4.7.2 .NET.
 
 **Original work by [Navin Ratnayake (@navinrtnk)](https://github.com/navinrtnk).** Copyright © 2026 Navin Ratnayake.
 
-![Making a margarita in the current game](docs/bar-overview.gif)
+![Serving a margarita to the customer](docs/bar-overview.gif)
 
 Take a customer's order, collect your shaker, scoop ice, and add tequila, prepared lime juice, simple syrup, and triple sec. Seal and shake, strain into a glass, and serve. Jointed first-person hands handle the tools throughout.
 

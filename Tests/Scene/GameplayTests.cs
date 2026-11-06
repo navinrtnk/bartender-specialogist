@@ -17,8 +17,9 @@ public static class GameplayTests
             System.IO.Directory.CreateDirectory(capture);
         var time = 0f;
         var preview = OS.GetCmdlineUserArgs().Contains("--preview-animations");
+        var previewServing = OS.GetCmdlineUserArgs().Contains("--preview-serving");
         var recorded = new HashSet<string>();
-        if (preview)
+        if (preview || previewServing)
             foreach (var patron in scene.GetNode("BackgroundPatrons").GetChildren().OfType<PatronActor>())
                 patron.SetProcess(true);
         void Check(string name, bool valid)
@@ -83,7 +84,7 @@ public static class GameplayTests
         async Task Finish(string name, float sampleAt)
         {
             var sampled = false;
-            var realtime = preview && (name is "shake" or "pour") && recorded.Add(name);
+            var realtime = (preview && (name is "shake" or "pour") || previewServing && name == "serve") && recorded.Add(name);
             if (realtime)
                 GD.Print($"PREVIEW_BEGIN {name} {Engine.GetProcessFrames()}");
             for (var frame = 0; game.Actions.Busy && frame < 1200; frame++)
@@ -104,6 +105,21 @@ public static class GameplayTests
             if (realtime)
                 GD.Print($"PREVIEW_END {name} {Engine.GetProcessFrames()}");
             Check(name + " action completes", !game.Actions.Busy);
+        }
+        async Task DrinkFor(float seconds, float poseDelta)
+        {
+            if (!previewServing)
+            {
+                game.Advance(seconds);
+                customer.Evaluate(time += seconds, poseDelta);
+                return;
+            }
+            for (var frame = 0; frame < (int)MathF.Round(seconds * 60); frame++)
+            {
+                game.Advance(1f / 60);
+                customer.Evaluate(time += 1f / 60, 1f / 60);
+                await scene.ToSignal(scene.GetTree(), SceneTree.SignalName.ProcessFrame);
+            }
         }
         async Task Make(bool grabFirst)
         {
@@ -174,13 +190,16 @@ public static class GameplayTests
         await Finish("serve", 1.7f);
         Check("customer drinking", game.Session.Drinking);
         Check("recipe hints update after serving", game.Hud.RecipeText.Contains("Customer is enjoying the drink"));
-        game.Advance(2.8);
-        customer.Evaluate(time += 2.8f, 2.8f);
+        await DrinkFor(2.8f, 2.8f);
         await Sample("customer-sip");
-        game.Advance(5);
-        customer.Evaluate(time += 5, 1f / 60);
+        await DrinkFor(5, 1f / 60);
         Check("great drink speech and audio", game.Hud.SpeechVisible && game.Hud.SpeechText == "Great drink!" && game.FeedbackPlaying);
         await Sample("great-drink");
+        if (previewServing)
+        {
+            await DrinkFor(1, 1f / 60);
+            GD.Print($"PREVIEW_END service {Engine.GetProcessFrames()}");
+        }
         game.Advance(60);
         customer.Evaluate(time += 60, 1f / 60);
         Check("empty glass after a minute", game.Session.Can(DrinkAction.CollectGlass) && CustomerDrinkCycle.Fill(game.Session.DrinkingSeconds) == 0);
